@@ -1,0 +1,88 @@
+[gd_scene load_steps=18 format=3 uid="uid://da3nkf03y0tcx"]
+
+[ext_resource type="PackedScene" uid="uid://b4ysuy43poobf" path="res://addons/godot-xr-tools/functions/function_pickup.tscn" id="1_56xrf"]
+[ext_resource type="PackedScene" uid="uid://cjcehqrfoxav3" path="res://addons/hand_pose_detector/hands/LeftHandHumanoid.gltf" id="1_ys2ye"]
+[ext_resource type="PackedScene" uid="uid://df5hynbooj1uj" path="res://addons/hand_pose_detector/hand_pose_detector.tscn" id="2_b08dm"]
+[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose.gd" id="3_uyl32"]
+[ext_resource type="Resource" uid="uid://dhbqusuodrl3r" path="res://addons/hand_pose_detector/poses/fist.tres" id="4_jpmh3"]
+[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose_set.gd" id="5_f5k7v"]
+[ext_resource type="PackedScene" uid="uid://bh8isvqs258cp" path="res://addons/hand_pose_detector/hand_pose_controller.tscn" id="6_iq3tr"]
+[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose_action.gd" id="7_io5y2"]
+[ext_resource type="Script" path="res://addons/hand_pose_detector/hand_pose_action_map.gd" id="8_7lo8v"]
+[ext_resource type="PackedScene" uid="uid://clc5dre31iskm" path="res://addons/godot-xr-tools/xr/start_xr.tscn" id="10_hii3w"]
+[ext_resource type="PackedScene" uid="uid://h3nbc78mfiie" path="res://block.tscn" id="11_ooc7j"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_s3l0w"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_mtuut"]
+sky_material = SubResource("ProceduralSkyMaterial_s3l0w")
+
+[sub_resource type="Environment" id="Environment_c2voy"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+sky = SubResource("Sky_mtuut")
+ambient_light_source = 2
+ambient_light_color = Color(0.454524, 0.454524, 0.454524, 1)
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="Resource" id="Resource_g2doc"]
+script = ExtResource("5_f5k7v")
+poses = Array[ExtResource("3_uyl32")]([ExtResource("4_jpmh3")])
+
+[sub_resource type="Resource" id="Resource_njkke"]
+script = ExtResource("7_io5y2")
+pose = ExtResource("4_jpmh3")
+action_type = 1
+action_name = "grip"
+
+[sub_resource type="Resource" id="Resource_2fdlu"]
+script = ExtResource("8_7lo8v")
+actions = Array[ExtResource("7_io5y2")]([SubResource("Resource_njkke")])
+
+[node name="main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_c2voy")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 0, 0)
+shadow_enabled = true
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="LeftVirtualController" type="XRController3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.398366, 1.35603, 0)
+tracker = &"/user/hand_pose_controller/left"
+
+[node name="FunctionPickup" parent="XROrigin3D/LeftVirtualController" instance=ExtResource("1_56xrf")]
+grab_distance = 0.1
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.67446, 0)
+
+[node name="LeftHandTracker" type="XRNode3D" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.338927, 1.35817, 0)
+tracker = &"/user/hand_tracker/left"
+
+[node name="LeftHandHumanoid2" parent="XROrigin3D/LeftHandTracker" instance=ExtResource("1_ys2ye")]
+
+[node name="XRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/LeftHandTracker/LeftHandHumanoid2/LeftHandHumanoid/Skeleton3D" index="1"]
+
+[node name="HandPoseDetector" parent="XROrigin3D/LeftHandTracker/LeftHandHumanoid2" instance=ExtResource("2_b08dm")]
+hand_pose_set = SubResource("Resource_g2doc")
+
+[node name="HandPoseController" parent="XROrigin3D/LeftHandTracker/LeftHandHumanoid2/HandPoseDetector" instance=ExtResource("6_iq3tr")]
+controller_action_map = SubResource("Resource_2fdlu")
+
+[node name="StartXR" parent="." instance=ExtResource("10_hii3w")]
+enable_passthrough = true
+
+[node name="Blocks" type="Node3D" parent="."]
+
+[node name="Block" parent="Blocks" instance=ExtResource("11_ooc7j")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.88943, -0.703053)
+
+[editable path="XROrigin3D/LeftHandTracker/LeftHandHumanoid2"]
